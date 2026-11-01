@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Family Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+html,body{margin:0;height:100%;background:#16202b;color:#f3efe6;font-family:"Avenir Next","Helvetica Neue",Helvetica,Arial,sans-serif;overflow:hidden}
+#app{height:100%;box-sizing:border-box;padding:16px 20px;display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column}
+#top{-webkit-flex:none;flex:none;display:-webkit-flex;display:flex;-webkit-align-items:stretch;align-items:stretch}
+#now{-webkit-flex:none;flex:none;width:300px;display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;padding-right:18px}
+#now .big{font-size:72px;line-height:1;margin-right:14px}
+#now .temp{font-size:58px;font-weight:600;line-height:1}
+#now .desc{font-size:20px;margin-top:4px}
+#now .sub{font-size:15px;color:#9fb0c1;margin-top:3px}
+#fc{-webkit-flex:1;flex:1;display:-webkit-flex;display:flex}
+.fd{-webkit-flex:1;flex:1;margin-left:8px;padding:10px 4px;background:#1f2d3b;border-radius:12px;text-align:center}
+.fd .n{font-size:17px;color:#9fb0c1}
+.fd .i{font-size:40px;margin:4px 0}
+.fd .h{font-size:22px;font-weight:600}
+.fd .l{font-size:17px;color:#9fb0c1}
+.fd .r{font-size:14px;color:#7fc4f0;margin-top:2px;min-height:17px}
+#bar{-webkit-flex:none;flex:none;display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;margin:14px 0 6px;padding-top:12px;border-top:1px solid #33465a}
+#legend{-webkit-flex:1;flex:1;font-size:17px}
+.who{display:inline-block;margin-right:18px}
+.dot{display:inline-block;width:12px;height:12px;border-radius:6px;margin-right:6px}
+#clock{font-size:34px;font-weight:600;text-align:right}
+#clock small{display:block;font-size:15px;font-weight:400;color:#9fb0c1}
+#agenda{-webkit-flex:1;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.dh{font-size:19px;font-weight:600;color:#e9c27a;margin:14px 0 6px}
+.ev{display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;margin-bottom:6px;padding:9px 12px;background:#1f2d3b;border-left:7px solid #888;border-radius:0 10px 10px 0}
+.ev .t{-webkit-flex:none;flex:none;width:112px;font-size:20px;font-weight:600}
+.ev .s{-webkit-flex:1;flex:1;font-size:22px}
+.ev .s i{display:block;font-style:normal;font-size:15px;color:#9fb0c1;margin-top:2px}
+.ev .p{-webkit-flex:none;flex:none;font-size:15px;font-weight:600;color:#16202b;padding:3px 10px;border-radius:12px}
+#empty,#err{color:#9fb0c1;font-size:18px;margin-top:20px}
+#err{color:#f0a07f;font-size:14px;margin:6px 0 0}
+@media (max-width:820px){
+ #top{-webkit-flex-direction:column;flex-direction:column}
+ #now{width:auto;padding:0 0 12px}
+ .fd{margin-left:0;margin-right:8px}
+ .fd:last-child{margin-right:0}
+}
+</style>
+</head>
+<body>
+<div id="app">
+ <div id="top"><div id="now">Loading weather…</div><div id="fc"></div></div>
+ <div id="bar"><div id="legend"></div><div id="clock"></div></div>
+ <div id="agenda"></div>
+ <div id="err"></div>
+</div>
+<script>
+/* ============ SETTINGS: edit this part ============ */
+var CONFIG = {
+  latitude: 51.5074,          // your home latitude
+  longitude: -0.1278,         // your home longitude
+  fahrenheit: false,          // true for °F and mph
+  use24h: true,               // false for 3:30pm style
+  daysAhead: 14,              // how far ahead the list looks
+  weatherRefreshMin: 30,
+  calendarRefreshMin: 15,
+  /* Most calendar feeds block direct browser access. Put the address of your
+     proxy here (see calendar-proxy-worker.js), ending in "?url=" */
+  proxy: "",
+  people: [
+    { name: "Mum",  color: "#f08a8a", url: "webcal://example.com/mum.ics" },
+    { name: "Dad",  color: "#6cb8f0", url: "webcal://example.com/dad.ics" },
+    { name: "Alex", color: "#8fd694", url: "webcal://example.com/alex.ics" },
+    { name: "Sam",  color: "#f2c46d", url: "webcal://example.com/sam.ics" }
+  ]
+};
+/* ================================================== */
+
+var DAYS = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+var MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+var WD = ["SU","MO","TU","WE","TH","FR","FS"];
+WD[6] = "SA";
+function $(id){ return document.getElementById(id); }
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function pad(n){ return n < 10 ? "0" + n : "" + n; }
+function fmtTime(d){
+  var h = d.getHours(), m = pad(d.getMinutes());
+  if (CONFIG.use24h) return pad(h) + ":" + m;
+  var ap = h < 12 ? "am" : "pm"; h = h % 12; if (h === 0) h = 12;
+  return h + ":" + m + ap;
+}
+function get(url, cb){
+  var x = new XMLHttpRequest(), done = false;
+  function fin(e, t){ if (!done){ done = true; cb(e, t); } }
+  x.open("GET", url, true);
+  x.timeout = 30000;
+  x.onreadystatechange = function(){
+    if (x.readyState === 4){
+      if (x.status >= 200 && x.status < 300) fin(null, x.responseText);
+      else fin(x.status ? "HTTP " + x.status : "blocked or offline");
+    }
+  };
+  x.ontimeout = function(){ fin("timed out"); };
+  x.send();
+}
+
+/* ---------- Weather (Open-Meteo, no key needed) ---------- */
+var WX = {0:["\u2600\uFE0F","Clear"],1:["\uD83C\uDF24","Mostly clear"],2:["\u26C5","Partly cloudy"],3:["\u2601\uFE0F","Overcast"],
+  45:["\uD83C\uDF2B","Fog"],48:["\uD83C\uDF2B","Freezing fog"],51:["\uD83C\uDF26","Light drizzle"],53:["\uD83C\uDF26","Drizzle"],55:["\uD83C\uDF26","Heavy drizzle"],
+  56:["\uD83C\uDF27","Freezing drizzle"],57:["\uD83C\uDF27","Freezing drizzle"],61:["\uD83C\uDF27","Light rain"],63:["\uD83C\uDF27","Rain"],65:["\uD83C\uDF27","Heavy rain"],
+  66:["\uD83C\uDF27","Freezing rain"],67:["\uD83C\uDF27","Freezing rain"],71:["\uD83C\uDF28","Light snow"],73:["\uD83C\uDF28","Snow"],75:["\uD83C\uDF28","Heavy snow"],
+  77:["\uD83C\uDF28","Snow grains"],80:["\uD83C\uDF26","Light showers"],81:["\uD83C\uDF27","Showers"],82:["\uD83C\uDF27","Heavy showers"],
+  85:["\uD83C\uDF28","Snow showers"],86:["\uD83C\uDF28","Snow showers"],95:["\u26C8","Thunderstorm"],96:["\u26C8","Thunder and hail"],99:["\u26C8","Thunder and hail"]};
+function wx(code, isDay){
+  var w = WX[code] || ["\u2753","Unknown"];
+  if (isDay === 0 && (code === 0 || code === 1)) return ["\uD83C\uDF19", w[1]];
+  return w;
+}
+function loadWeather(){
+  var f = CONFIG.fahrenheit;
+  var u = "https://api.open-meteo.com/v1/forecast?latitude=" + CONFIG.latitude + "&longitude=" + CONFIG.longitude +
+    "&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,is_day" +
+    "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max" +
+    "&forecast_days=5&timezone=auto&temperature_unit=" + (f ? "fahrenheit&wind_speed_unit=mph" : "celsius&wind_speed_unit=kmh");
+  get(u, function(err, txt){
+    if (err){ setErr("weather", err); return; }
+    setErr("weather", null);
+    var d; try { d = JSON.parse(txt); } catch (e) { setErr("weather", "bad data"); return; }
+    var c = d.current, w = wx(c.weather_code, c.is_day), unit = f ? "mph" : "km/h";
+    $("now").innerHTML = '<div class="big">' + w[0] + '</div><div><div class="temp">' + Math.round(c.temperature_2m) + '\u00B0</div>' +
+      '<div class="desc">' + w[1] + '</div><div class="sub">Feels like ' + Math.round(c.apparent_temperature) + '\u00B0 \u00A0 Wind ' + Math.round(c.wind_speed_10m) + ' ' + unit + '</div></div>';
+    var h = "", t = d.daily.time;
+    for (var i = 0; i < t.length; i++){
+      var p = t[i].split("-"), day = new Date(+p[0], +p[1] - 1, +p[2]);
+      var rain = d.daily.precipitation_probability_max[i];
+      h += '<div class="fd"><div class="n">' + (i === 0 ? "Today" : DAYS[day.getDay()].substring(0, 3)) + '</div><div class="i">' +
+        wx(d.daily.weather_code[i], 1)[0] + '</div><div class="h">' + Math.round(d.daily.temperature_2m_max[i]) + '\u00B0</div><div class="l">' +
+        Math.round(d.daily.temperature_2m_min[i]) + '\u00B0</div><div class="r">' + (rain >= 20 ? "\uD83D\uDCA7 " + rain + "%" : "") + '</div></div>';
+    }
+    $("fc").innerHTML = h;
+  });
+}
+
+/* ---------- iCal parsing ---------- */
+function parseDate(v, params){
+  var y = +v.substr(0, 4), mo = +v.substr(4, 2) - 1, d = +v.substr(6, 2);
+  if (v.length === 8) return new Date(y, mo, d);
+  var H = +v.substr(9, 2), M = +v.substr(11, 2), S = +v.substr(13, 2) || 0;
+  if (v.charAt(v.length - 1) === "Z") return new Date(Date.UTC(y, mo, d, H, M, S));
+  return new Date(y, mo, d, H, M, S); /* TZID times are treated as local time */
+}
+function unesc(s){ return s.replace(/\\n/gi, " ").replace(/\\,/g, ",").replace(/\\;/g, ";").replace(/\\\\/g, "\\"); }
+function key(d){ return d.getFullYear() + "-" + d.getMonth() + "-" + d.getDate() + "-" + d.getHours() + "-" + d.getMinutes(); }
+function parseByDay(v){
+  var a = v.split(","), out = [];
+  for (var i = 0; i < a.length; i++){
+    var m = /^([+-]?\d*)([A-Z]{2})$/.exec(a[i]); if (!m) continue;
+    out.push({ n: m[1] ? parseInt(m[1], 10) : 0, d: WD.indexOf(m[2]) });
+  }
+  return out;
+}
+function parseRRule(v){
+  var r = { freq: "", interval: 1, byday: [], bymonthday: [], bymonth: [], count: 0, until: null };
+  var parts = v.split(";");
+  for (var i = 0; i < parts.length; i++){
+    var kv = parts[i].split("="), k = kv[0], val = kv[1] || "";
+    if (k === "FREQ") r.freq = val;
+    else if (k === "INTERVAL") r.interval = parseInt(val, 10) || 1;
+    else if (k === "COUNT") r.count = parseInt(val, 10) || 0;
+    else if (k === "UNTIL"){ r.until = parseDate(val, {}); if (val.length === 8) r.until = new Date(r.until.getTime() + 864e5 - 1); }
+    else if (k === "BYDAY") r.byday = parseByDay(val);
+    else if (k === "BYMONTHDAY") r.bymonthday = val.split(",").map(Number);
+    else if (k === "BYMONTH") r.bymonth = val.split(",").map(Number);
+  }
+  return r;
+}
+function parseICS(text){
+  var lines = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n").replace(/\n[ \t]/g, "").split("\n");
+  var events = [], cur = null;
+  for (var i = 0; i < lines.length; i++){
+    var line = lines[i];
+    if (line === "BEGIN:VEVENT"){ cur = { ex: {} }; continue; }
+    if (line === "END:VEVENT"){ if (cur && cur.start) events.push(cur); cur = null; continue; }
+    if (!cur) continue;
+    var idx = line.indexOf(":"); if (idx < 0) continue;
+    var left = line.substring(0, idx), val = line.substring(idx + 1), parts = left.split(";"), name = parts[0].toUpperCase(), params = {};
+    for (var j = 1; j < parts.length; j++){ var kv = parts[j].split("="); params[kv[0].toUpperCase()] = kv[1]; }
+    if (name === "DTSTART"){ cur.start = parseDate(val, params); cur.allDay = (val.length === 8); }
+    else if (name === "DTEND") cur.end = parseDate(val, params);
+    else if (name === "SUMMARY") cur.summary = unesc(val);
+    else if (name === "LOCATION") cur.loc = unesc(val);
+    else if (name === "UID") cur.uid = val;
+    else if (name === "STATUS") cur.cancelled = (val === "CANCELLED");
+    else if (name === "RRULE") cur.rrule = parseRRule(val);
+    else if (name === "RECURRENCE-ID") cur.recId = parseDate(val, params);
+    else if (name === "EXDATE"){ var xs = val.split(","); for (var k = 0; k < xs.length; k++) cur.ex[key(parseDate(xs[k], params))] = true; }
+  }
+  return events;
+}
+
+/* ---------- Recurrence ---------- */
+function dayStart(d){ return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+function addDays(d, n){ return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n, d.getHours(), d.getMinutes(), d.getSeconds()); }
+function dayNum(d){ return Math.round(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 864e5); }
+function hasDow(list, dow){ for (var i = 0; i < list.length; i++) if (list[i].d === dow) return true; return false; }
+function matches(r, s, d){
+  var diff = dayNum(d) - dayNum(s); if (diff < 0) return false;
+  var dow = d.getDay();
+  if (r.freq === "DAILY") return diff % r.interval === 0 && (!r.byday.length || hasDow(r.byday, dow));
+  if (r.freq === "WEEKLY"){
+    if (Math.floor((diff + s.getDay()) / 7) % r.interval !== 0) return false;
+    return hasDow(r.byday.length ? r.byday : [{ n: 0, d: s.getDay() }], dow);
+  }
+  if (r.freq === "MONTHLY" || r.freq === "YEARLY"){
+    if (r.freq === "MONTHLY"){
+      var md = (d.getFullYear() - s.getFullYear()) * 12 + d.getMonth() - s.getMonth();
+      if (md % r.interval !== 0) return false;
+      if (r.bymonth.length && r.bymonth.indexOf(d.getMonth() + 1) < 0) return false;
+    } else {
+      if ((d.getFullYear() - s.getFullYear()) % r.interval !== 0) return false;
+      if ((r.bymonth.length ? r.bymonth : [s.getMonth() + 1]).indexOf(d.getMonth() + 1) < 0) return false;
+    }
+    if (r.byday.length){
+      for (var i = 0; i < r.byday.length; i++){
+        var b = r.byday[i]; if (b.d !== dow) continue;
+        if (b.n === 0) return true;
+        if (b.n > 0 && Math.ceil(d.getDate() / 7) === b.n) return true;
+        if (b.n < 0){
+          var dim = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+          if (Math.ceil((dim - d.getDate() + 1) / 7) === -b.n) return true;
+        }
+      }
+      return false;
+    }
+    if (r.bymonthday.length) return r.bymonthday.indexOf(d.getDate()) >= 0;
+    return d.getDate() === s.getDate();
+  }
+  return false;
+}
+function occurrences(ev, winStart, winEnd, overrides){
+  var s = ev.start, dur = ev.end ? ev.end.getTime() - s.getTime() : (ev.allDay ? 864e5 : 0), out = [];
+  function mk(st, en){ return { start: st, end: en, allDay: ev.allDay, summary: ev.summary, loc: ev.loc }; }
+  if (!ev.rrule){ out.push(mk(s, new Date(s.getTime() + dur))); return out; }
+  var r = ev.rrule, d = dayStart(s), n = 0, guard = 0;
+  if (!r.count){
+    var skip = dayNum(winStart) - dayNum(s) - Math.ceil(dur / 864e5) - 1;
+    if (skip > 0) d = addDays(d, skip);
+  }
+  while (d < winEnd && guard++ < 20000){
+    if (r.until && d > r.until) break;
+    if (matches(r, s, d)){
+      n++;
+      if (r.count && n > r.count) break;
+      var st = new Date(d.getFullYear(), d.getMonth(), d.getDate(), s.getHours(), s.getMinutes(), s.getSeconds());
+      var k = key(st);
+      if (!ev.ex[k] && !(ev.uid && overrides[ev.uid + "|" + k])) out.push(mk(st, new Date(st.getTime() + dur)));
+    }
+    d = addDays(d, 1);
+  }
+  return out;
+}
+
+/* ---------- Calendars ---------- */
+var store = {}, errors = {};
+function setErr(k, v){ errors[k] = v; var m = []; for (var x in errors) if (errors[x]) m.push(x + ": " + errors[x]); $("err").innerHTML = m.length ? esc("Couldn't update \u2013 " + m.join(" \u00B7 ")) : ""; }
+function loadCal(i){
+  var p = CONFIG.people[i], u = p.url.replace(/^webcal:/i, "https:");
+  if (CONFIG.proxy) u = CONFIG.proxy + encodeURIComponent(u);
+  get(u, function(err, txt){
+    if (err){ setErr(p.name, err); return; }
+    try { store[i] = parseICS(txt); setErr(p.name, null); } catch (e) { setErr(p.name, "unreadable calendar"); }
+    renderAgenda();
+  });
+}
+function dayLabel(d, today){
+  var diff = dayNum(d) - dayNum(today);
+  if (diff === 0) return "Today";
+  if (diff === 1) return "Tomorrow";
+  return DAYS[d.getDay()] + " " + d.getDate() + " " + MONTHS[d.getMonth()];
+}
+function renderAgenda(){
+  var now = new Date(), today = dayStart(now), winEnd = addDays(today, CONFIG.daysAhead), items = [];
+  for (var i = 0; i < CONFIG.people.length; i++){
+    var evs = store[i]; if (!evs) continue;
+    var overrides = {}, j;
+    for (j = 0; j < evs.length; j++) if (evs[j].recId && evs[j].uid) overrides[evs[j].uid + "|" + key(evs[j].recId)] = true;
+    for (j = 0; j < evs.length; j++){
+      if (evs[j].cancelled) continue;
+      var occ = occurrences(evs[j], today, winEnd, overrides);
+      for (var o = 0; o < occ.length; o++){
+        var e = occ[o], day;
+        if (e.allDay){
+          var last = e.end > e.start ? addDays(dayStart(e.end), -1) : dayStart(e.start);
+          for (day = dayStart(e.start); day <= last; day = addDays(day, 1))
+            if (day >= today && day < winEnd) items.push({ day: day, e: e, who: i });
+        } else {
+          day = dayStart(e.start);
+          var fin = e.end > e.start ? e.end : e.start;
+          if (day >= today && day < winEnd && fin >= now) items.push({ day: day, e: e, who: i });
+        }
+      }
+    }
+  }
+  items.sort(function(a, b){
+    if (a.day.getTime() !== b.day.getTime()) return a.day - b.day;
+    if (a.e.allDay !== b.e.allDay) return a.e.allDay ? -1 : 1;
+    return a.e.start - b.e.start;
+  });
+  var h = "", cur = -1;
+  for (var k = 0; k < items.length; k++){
+    var it = items[k], dn = dayNum(it.day), p = CONFIG.people[it.who];
+    if (dn !== cur){ cur = dn; h += '<div class="dh">' + dayLabel(it.day, today) + '</div>'; }
+    var t = it.e.allDay ? "All day" : fmtTime(it.e.start);
+    h += '<div class="ev" style="border-left-color:' + p.color + '"><div class="t">' + t + '</div><div class="s">' + esc(it.e.summary || "(no title)") +
+      (it.e.loc ? '<i>' + esc(it.e.loc) + '</i>' : '') + '</div><div class="p" style="background:' + p.color + '">' + esc(p.name) + '</div></div>';
+  }
+  $("agenda").innerHTML = h || '<div id="empty">Nothing planned in the next ' + CONFIG.daysAhead + ' days.</div>';
+}
+
+/* ---------- Clock, legend, timers ---------- */
+function tick(){
+  var n = new Date();
+  $("clock").innerHTML = fmtTime(n) + '<small>' + DAYS[n.getDay()] + " " + n.getDate() + " " + MONTHS[n.getMonth()] + '</small>';
+}
+function start(){
+  var lg = "";
+  for (var i = 0; i < CONFIG.people.length; i++)
+    lg += '<span class="who"><span class="dot" style="background:' + CONFIG.people[i].color + '"></span>' + esc(CONFIG.people[i].name) + '</span>';
+  $("legend").innerHTML = lg;
+  tick(); loadWeather(); renderAgenda();
+  for (var j = 0; j < CONFIG.people.length; j++) loadCal(j);
+  setInterval(tick, 10000);
+  setInterval(renderAgenda, 60000);
+  setInterval(loadWeather, CONFIG.weatherRefreshMin * 60000);
+  setInterval(function(){ for (var q = 0; q < CONFIG.people.length; q++) loadCal(q); }, CONFIG.calendarRefreshMin * 60000);
+}
+start();
+</script>
+</body>
+</html>

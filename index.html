@@ -8,47 +8,49 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
 html,body{margin:0;height:100%;background:#16202b;color:#f3efe6;font-family:"Avenir Next","Helvetica Neue",Helvetica,Arial,sans-serif;overflow:hidden}
-#app{height:100%;box-sizing:border-box;padding:16px 20px;display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column}
-#top{-webkit-flex:none;flex:none;display:-webkit-flex;display:flex;-webkit-align-items:stretch;align-items:stretch}
-#now{-webkit-flex:none;flex:none;width:300px;display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;padding-right:18px}
-#now .big{font-size:72px;line-height:1;margin-right:14px}
-#now .temp{font-size:58px;font-weight:600;line-height:1}
-#now .desc{font-size:20px;margin-top:4px}
-#now .sub{font-size:15px;color:#9fb0c1;margin-top:3px}
-#fc{-webkit-flex:1;flex:1;display:-webkit-flex;display:flex}
-.fd{-webkit-flex:1;flex:1;margin-left:8px;padding:10px 4px;background:#1f2d3b;border-radius:12px;text-align:center}
-.fd .n{font-size:17px;color:#9fb0c1}
-.fd .i{font-size:40px;margin:4px 0}
-.fd .h{font-size:22px;font-weight:600}
-.fd .l{font-size:17px;color:#9fb0c1}
-.fd .r{font-size:14px;color:#7fc4f0;margin-top:2px;min-height:17px}
-#bar{-webkit-flex:none;flex:none;display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;margin:14px 0 6px;padding-top:12px;border-top:1px solid #33465a}
-#legend{-webkit-flex:1;flex:1;font-size:17px}
-.who{display:inline-block;margin-right:18px}
-.dot{display:inline-block;width:12px;height:12px;border-radius:6px;margin-right:6px}
-#clock{font-size:34px;font-weight:600;text-align:right}
-#clock small{display:block;font-size:15px;font-weight:400;color:#9fb0c1}
+#app{height:100%;box-sizing:border-box;padding:16px 22px 8px;display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column}
+#head{-webkit-flex:none;flex:none;display:-webkit-flex;display:flex;-webkit-justify-content:space-between;justify-content:space-between;-webkit-align-items:flex-end;align-items:flex-end;padding-bottom:14px;border-bottom:1px solid #33465a}
+#left{-webkit-flex:none;flex:none}
+#clock{font-size:92px;font-weight:300;line-height:1}
+#clock small{font-size:28px;color:#9fb0c1;margin-left:6px}
+#date{font-size:26px;margin-top:6px}
+#right{-webkit-flex:none;flex:none;text-align:right}
+#meta{font-size:16px;line-height:22px;color:#9fb0c1}
+#cur{display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;-webkit-justify-content:flex-end;justify-content:flex-end}
+#cur .temp{font-size:72px;font-weight:300;line-height:1.1}
+#cur .ic{font-size:56px;margin-left:12px}
+#fc{display:-webkit-flex;display:flex;margin-top:8px}
+.fd{-webkit-flex:none;flex:none;width:92px;margin-left:8px;text-align:center}
+.fd .n{font-size:14px;font-weight:600;background:#2a3b4d;border-radius:12px;padding:3px 0;color:#c8d4e0}
+.fd .i{font-size:34px;margin:6px 0 2px}
+.fd .r{font-size:14px;color:#7fc4f0;min-height:17px}
+.fd .t{font-size:22px;font-weight:600;margin-top:2px}
+.fd .t span{color:#9fb0c1;font-weight:400;margin-left:8px}
 #agenda{-webkit-flex:1;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
-.dh{font-size:19px;font-weight:600;color:#e9c27a;margin:14px 0 6px}
-.ev{display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;margin-bottom:6px;padding:9px 12px;background:#1f2d3b;border-left:7px solid #888;border-radius:0 10px 10px 0}
-.ev .t{-webkit-flex:none;flex:none;width:112px;font-size:20px;font-weight:600}
-.ev .s{-webkit-flex:1;flex:1;font-size:22px}
-.ev .s i{display:block;font-style:normal;font-size:15px;color:#9fb0c1;margin-top:2px}
-.ev .p{-webkit-flex:none;flex:none;font-size:15px;font-weight:600;color:#16202b;padding:3px 10px;border-radius:12px}
-#empty,#err{color:#9fb0c1;font-size:18px;margin-top:20px}
-#err{color:#f0a07f;font-size:14px;margin:6px 0 0}
+.dh{font-size:24px;margin:16px 0 7px}
+.dh b{font-weight:300;font-size:28px;color:#9fb0c1;margin-right:10px}
+.ev{display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;margin-bottom:6px;padding:9px 14px;border-left:6px solid #888;border-radius:0 8px 8px 0}
+.ev .t{-webkit-flex:none;flex:none;width:118px;font-size:17px;color:rgba(255,255,255,.68)}
+.ev .s{-webkit-flex:1;flex:1;font-size:24px;font-weight:600}
+.ev .s i{display:block;font-style:normal;font-weight:400;font-size:16px;color:rgba(255,255,255,.62);margin-top:2px}
+.ev .p{-webkit-flex:none;flex:none;font-size:15px;font-weight:600;margin-left:10px}
+#empty{color:#9fb0c1;font-size:18px;margin-top:20px}
+#err{-webkit-flex:none;flex:none;color:#f0a07f;font-size:14px;min-height:4px}
 @media (max-width:820px){
- #top{-webkit-flex-direction:column;flex-direction:column}
- #now{width:auto;padding:0 0 12px}
- .fd{margin-left:0;margin-right:8px}
- .fd:last-child{margin-right:0}
+ #head{-webkit-flex-direction:column;flex-direction:column;-webkit-align-items:stretch;align-items:stretch}
+ #clock{font-size:76px}
+ #right{width:100%;margin-top:10px}
+ .fd{-webkit-flex:1;flex:1;width:auto}
+ .fd:first-child{margin-left:0}
 }
 </style>
 </head>
 <body>
 <div id="app">
- <div id="top"><div id="now">Loading weather…</div><div id="fc"></div></div>
- <div id="bar"><div id="legend"></div><div id="clock"></div></div>
+ <div id="head">
+  <div id="left"><div id="clock"></div><div id="date"></div></div>
+  <div id="right"><div id="meta">Loading weather…</div><div id="cur"></div><div id="fc"></div></div>
+ </div>
  <div id="agenda"></div>
  <div id="err"></div>
 </div>
@@ -66,11 +68,12 @@ var CONFIG = {
      proxy here (see calendar-proxy-worker.js), ending in "?url=" */
   proxy: "",
   people: [
-    { name: "Mum",  color: "#f26b6b", url: "webcal://p119-caldav.icloud.com/published/2/MTYxNjg4MTkwMTYxNjg4MY6uZ9jLh_uf0S2sPKF2VfImHaEQEH1YEMjo7tjNUI8pnU4GJ4oxZiivgbcppzZgMFsfanGgEgkC49Gu0ZjB39w" },
-    { name: "Dad",  color: "#6fd67f", url: "webcal://p119-caldav.icloud.com/published/2/MTYxNjg4MTkwMTYxNjg4MY6uZ9jLh_uf0S2sPKF2VfJNMFDN_iSRm6STbpuPDXxWIGpYN4YEjQNLy53xB8L8zFYHxQ4HN_r8JyjgAAeJ55w" },
-    { name: "Kids", color: "#b48cf2", url: "webcal://p119-caldav.icloud.com/published/2/MTYxNjg4MTkwMTYxNjg4MY6uZ9jLh_uf0S2sPKF2VfKfOZ94MwDEDa4WaGBjlHM3onY_XNRN4APcMWjJP5DnFUdSWPbA_pxf79iG20tSuok" },
-    { name: "Amelia netball",  color: "#b48cf2", url: "https://ics.ecal.com/ecal-sub/6ac070ea9bd09c00022b94c5/PlayHQ.ics" },
-    { name: "Sophie netball",  color: "#b48cf2", url: "https://ics.ecal.com/ecal-sub/6ac071f742fc77000281b7be/PlayHQ.ics" }
+    { name: "Mum",  color: "#f26b6b", url: "webcal://example.com/mum.ics" },
+    { name: "Dad",  color: "#6fd67f", url: "webcal://example.com/dad.ics" },
+    { name: "Kids", color: "#b48cf2", url: "webcal://example.com/kids.ics" },
+    { name: "Amelia netball",  color: "#b48cf2", url: "webcal://example.com/amelia-netball.ics" },
+    { name: "Sophie netball", color: "#b48cf2", url: "webcal://example.com/sophie-netball.ics" }
+  ]
 };
 /* ================================================== */
 
@@ -114,26 +117,35 @@ function wx(code, isDay){
   if (isDay === 0 && (code === 0 || code === 1)) return ["\uD83C\uDF19", w[1]];
   return w;
 }
+var CARD = ["N","NE","E","SE","S","SW","W","NW"];
+function hm(t){
+  var h = +t.substr(11, 2), m = t.substr(14, 2);
+  if (CONFIG.use24h) return pad(h) + ":" + m;
+  var ap = h < 12 ? "am" : "pm"; h = h % 12; if (h === 0) h = 12;
+  return h + ":" + m + ap;
+}
 function loadWeather(){
   var f = CONFIG.fahrenheit;
   var u = "https://api.open-meteo.com/v1/forecast?latitude=" + CONFIG.latitude + "&longitude=" + CONFIG.longitude +
-    "&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,is_day" +
-    "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max" +
+    "&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,is_day" +
+    "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset" +
     "&forecast_days=5&timezone=auto&temperature_unit=" + (f ? "fahrenheit&wind_speed_unit=mph" : "celsius&wind_speed_unit=kmh");
   get(u, function(err, txt){
     if (err){ setErr("weather", err); return; }
     setErr("weather", null);
     var d; try { d = JSON.parse(txt); } catch (e) { setErr("weather", "bad data"); return; }
     var c = d.current, w = wx(c.weather_code, c.is_day), unit = f ? "mph" : "km/h";
-    $("now").innerHTML = '<div class="big">' + w[0] + '</div><div><div class="temp">' + Math.round(c.temperature_2m) + '\u00B0</div>' +
-      '<div class="desc">' + w[1] + '</div><div class="sub">Feels like ' + Math.round(c.apparent_temperature) + '\u00B0 \u00A0 Wind ' + Math.round(c.wind_speed_10m) + ' ' + unit + '</div></div>';
+    var dir = CARD[Math.round(c.wind_direction_10m / 45) % 8];
+    $("meta").innerHTML = w[1] + ' \u00B7 feels ' + Math.round(c.apparent_temperature) + '\u00B0<br>\uD83D\uDCA8 ' + Math.round(c.wind_speed_10m) + ' ' + unit + ' ' + dir +
+      ' \u00A0 \uD83C\uDF05 ' + hm(d.daily.sunrise[0]) + ' \u00A0 \uD83C\uDF07 ' + hm(d.daily.sunset[0]);
+    $("cur").innerHTML = '<div class="temp">' + Math.round(c.temperature_2m) + '\u00B0</div><div class="ic">' + w[0] + '</div>';
     var h = "", t = d.daily.time;
     for (var i = 0; i < t.length; i++){
       var p = t[i].split("-"), day = new Date(+p[0], +p[1] - 1, +p[2]);
       var rain = d.daily.precipitation_probability_max[i];
-      h += '<div class="fd"><div class="n">' + (i === 0 ? "Today" : DAYS[day.getDay()].substring(0, 3)) + '</div><div class="i">' +
-        wx(d.daily.weather_code[i], 1)[0] + '</div><div class="h">' + Math.round(d.daily.temperature_2m_max[i]) + '\u00B0</div><div class="l">' +
-        Math.round(d.daily.temperature_2m_min[i]) + '\u00B0</div><div class="r">' + (rain >= 20 ? "\uD83D\uDCA7 " + rain + "%" : "") + '</div></div>';
+      h += '<div class="fd"><div class="n">' + (i === 0 ? "TODAY" : DAYS[day.getDay()].substring(0, 3).toUpperCase()) + '</div><div class="i">' +
+        wx(d.daily.weather_code[i], 1)[0] + '</div><div class="r">' + (rain === null || rain === undefined ? "" : "\uD83D\uDCA7 " + rain + "%") +
+        '</div><div class="t">' + Math.round(d.daily.temperature_2m_max[i]) + '<span>' + Math.round(d.daily.temperature_2m_min[i]) + '</span></div></div>';
     }
     $("fc").innerHTML = h;
   });
@@ -274,7 +286,11 @@ function dayLabel(d, today){
   var diff = dayNum(d) - dayNum(today);
   if (diff === 0) return "Today";
   if (diff === 1) return "Tomorrow";
-  return DAYS[d.getDay()] + " " + d.getDate() + " " + MONTHS[d.getMonth()];
+  return DAYS[d.getDay()];
+}
+function mix(hex){
+  var n = parseInt(hex.substr(1), 16), k = 0.2;
+  return "rgb(" + Math.round(22 + (((n >> 16) & 255) - 22) * k) + "," + Math.round(32 + (((n >> 8) & 255) - 32) * k) + "," + Math.round(43 + ((n & 255) - 43) * k) + ")";
 }
 function renderAgenda(){
   var now = new Date(), today = dayStart(now), winEnd = addDays(today, CONFIG.daysAhead), items = [];
@@ -288,13 +304,14 @@ function renderAgenda(){
       for (var o = 0; o < occ.length; o++){
         var e = occ[o], day;
         if (e.allDay){
-          var last = e.end > e.start ? addDays(dayStart(e.end), -1) : dayStart(e.start);
-          for (day = dayStart(e.start); day <= last; day = addDays(day, 1))
-            if (day >= today && day < winEnd) items.push({ day: day, e: e, who: i });
+          var first = dayStart(e.start), last = e.end > e.start ? addDays(dayStart(e.end), -1) : first;
+          var total = dayNum(last) - dayNum(first) + 1;
+          for (day = first; day <= last; day = addDays(day, 1))
+            if (day >= today && day < winEnd) items.push({ day: day, e: e, who: i, idx: dayNum(day) - dayNum(first) + 1, total: total });
         } else {
           day = dayStart(e.start);
           var fin = e.end > e.start ? e.end : e.start;
-          if (day >= today && day < winEnd && fin >= now) items.push({ day: day, e: e, who: i });
+          if (day >= today && day < winEnd && fin >= now) items.push({ day: day, e: e, who: i, idx: 1, total: 1 });
         }
       }
     }
@@ -307,27 +324,26 @@ function renderAgenda(){
   var h = "", cur = -1;
   for (var k = 0; k < items.length; k++){
     var it = items[k], dn = dayNum(it.day), p = CONFIG.people[it.who];
-    if (dn !== cur){ cur = dn; h += '<div class="dh">' + dayLabel(it.day, today) + '</div>'; }
+    if (dn !== cur){ cur = dn; h += '<div class="dh"><b>' + pad(it.day.getDate()) + '</b>' + dayLabel(it.day, today) + '</div>'; }
     var t = it.e.allDay ? "All day" : fmtTime(it.e.start);
-    h += '<div class="ev" style="border-left-color:' + p.color + '"><div class="t">' + t + '</div><div class="s">' + esc(it.e.summary || "(no title)") +
-      (it.e.loc ? '<i>' + esc(it.e.loc) + '</i>' : '') + '</div><div class="p" style="background:' + p.color + '">' + esc(p.name) + '</div></div>';
+    var sub = it.total > 1 ? "Day " + it.idx + "/" + it.total : (it.e.loc || "");
+    h += '<div class="ev" style="background:' + mix(p.color) + ';border-left-color:' + p.color + '"><div class="t">' + t + '</div><div class="s">' +
+      esc(it.e.summary || "(no title)") + (sub ? '<i>' + esc(sub) + '</i>' : '') + '</div><div class="p" style="color:' + p.color + '">' + esc(p.name) + '</div></div>';
   }
   $("agenda").innerHTML = h || '<div id="empty">Nothing planned in the next ' + CONFIG.daysAhead + ' days.</div>';
 }
 
-/* ---------- Clock, legend, timers ---------- */
+/* ---------- Clock and timers ---------- */
 function tick(){
-  var n = new Date();
-  $("clock").innerHTML = fmtTime(n) + '<small>' + DAYS[n.getDay()] + " " + n.getDate() + " " + MONTHS[n.getMonth()] + '</small>';
+  var n = new Date(), h = n.getHours(), m = pad(n.getMinutes()), ap = "";
+  if (!CONFIG.use24h){ ap = h < 12 ? " am" : " pm"; h = h % 12; if (h === 0) h = 12; } else h = pad(h);
+  $("clock").innerHTML = h + ":" + m + '<small>' + pad(n.getSeconds()) + ap + '</small>';
+  $("date").innerHTML = DAYS[n.getDay()] + ", " + n.getDate() + " " + MONTHS[n.getMonth()];
 }
 function start(){
-  var lg = "";
-  for (var i = 0; i < CONFIG.people.length; i++)
-    lg += '<span class="who"><span class="dot" style="background:' + CONFIG.people[i].color + '"></span>' + esc(CONFIG.people[i].name) + '</span>';
-  $("legend").innerHTML = lg;
   tick(); loadWeather(); renderAgenda();
   for (var j = 0; j < CONFIG.people.length; j++) loadCal(j);
-  setInterval(tick, 10000);
+  setInterval(tick, 1000);
   setInterval(renderAgenda, 60000);
   setInterval(loadWeather, CONFIG.weatherRefreshMin * 60000);
   setInterval(function(){ for (var q = 0; q < CONFIG.people.length; q++) loadCal(q); }, CONFIG.calendarRefreshMin * 60000);
